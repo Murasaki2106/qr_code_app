@@ -4,15 +4,17 @@ const path = require('path');
 function createWindow() {
   // Create the browser window.
   const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1000,
+    height: 800,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
-      enableRemoteModule: true,
       webSecurity: true,
     },
   });
+  
+  // Open DevTools for debugging
+  win.webContents.openDevTools();
 
   // Load the index.html of the app.
   win.loadFile('index.html');
