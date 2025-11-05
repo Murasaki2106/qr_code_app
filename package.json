@@ -1,0 +1,17 @@
+{
+  "name": "vernam-qr-app",
+  "version": "1.0.0",
+  "description": "Vernam Cipher QR Code App",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "electron": "^28.0.0",
+    "jsqr": "^1.4.0",
+    "qrcode": "^1.5.3"
+  }
+}
