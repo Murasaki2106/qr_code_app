@@ -1,7 +1,5 @@
-const { qrcode, jsQR } = require('electron').remote.require({
-  qrcode: 'qrcode',
-  jsQR: 'jsqr',
-});
+const QRCode = require('qrcode');
+const jsQR = require('jsqr');
 
 // --- Helper Functions ---
 
@@ -56,8 +54,13 @@ encryptBtn.addEventListener('click', () => {
   // 2. IMPORTANT: Convert binary ciphertext to Base64 to make it QR-safe
   const base64Ciphertext = btoa(ciphertext);
 
-  // 3. Generate the QR code
-  qrcode.toCanvas(qrCanvas, base64Ciphertext, (error) => {
+  // 3. Generate the QR code with proper options
+  QRCode.toCanvas(qrCanvas, base64Ciphertext, {
+    errorCorrectionLevel: 'H',
+    margin: 1,
+    scale: 8,
+    width: 300
+  }, (error) => {
     if (error) {
       console.error(error);
       showError('error-message-encrypt', 'Error generating QR code.');
@@ -89,19 +92,49 @@ decryptBtn.addEventListener('click', () => {
 
   reader.onload = (e) => {
     const img = new Image();
+    
+    img.onerror = () => {
+      showError('error-message-decrypt', 'Error: Failed to load the image.');
+    };
+    
     img.onload = () => {
-      // Create a temporary canvas to read the image data
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0, img.width, img.height);
-      
-      // Get the pixel data from the canvas
-      const imageData = ctx.getImageData(0, 0, img.width, img.height);
-      
-      // 1. Read the QR code data using jsQR
-      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: "dontInvert",
+        });
+
+        if (code) {
+          try {
+            const base64Ciphertext = code.data;
+            const ciphertext = atob(base64Ciphertext);
+            const decryptedText = vernamCipher(ciphertext, key);
+            resultText.value = decryptedText;
+            hideError('error-message-decrypt');
+          } catch (decryptError) {
+            console.error('Decryption Error:', decryptError);
+            showError('error-message-decrypt', 'Error: Invalid QR code data or wrong encryption key.');
+          }
+        } else {
+          showError('error-message-decrypt', 'Error: No valid QR code found in the image.');
+        }
+      } catch (error) {
+        console.error('QR Processing Error:', error);
+        showError('error-message-decrypt', 'Error: Failed to process the QR code image.');
+      }
+    };
+    
+    img.src = e.target.result;
+  };
+
+  reader.readAsDataURL(file);
+});
 
       if (code) {
         // 2. We get the Base64 data from the QR code
