@@ -7,8 +7,10 @@ function createWindow() {
     width: 800,
     height: 600,
     webPreferences: {
-      nodeIntegration: true, // Allow Node.js APIs in the renderer
-      contextIsolation: false, // For simplicity in this example
+      nodeIntegration: true,
+      contextIsolation: false,
+      enableRemoteModule: true,
+      webSecurity: true,
     },
   });
 
