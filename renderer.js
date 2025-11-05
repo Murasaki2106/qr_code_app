@@ -38,7 +38,11 @@ function hideError(id) {
 const encryptBtn = document.getElementById('encrypt-btn');
 const qrCanvas = document.getElementById('qr-canvas');
 
+// Clear any previous QR code
+qrCanvas.getContext('2d').clearRect(0, 0, qrCanvas.width, qrCanvas.height);
+
 encryptBtn.addEventListener('click', () => {
+  console.log('Encrypt button clicked');
   hideError('error-message-encrypt');
   const plaintext = document.getElementById('plaintext').value;
   const key = document.getElementById('encrypt-key').value;
@@ -48,24 +52,31 @@ encryptBtn.addEventListener('click', () => {
     return;
   }
 
+  console.log('Encrypting text...');
   // 1. Encrypt the text
   const ciphertext = vernamCipher(plaintext, key);
 
   // 2. IMPORTANT: Convert binary ciphertext to Base64 to make it QR-safe
   const base64Ciphertext = btoa(ciphertext);
+  console.log('Text encrypted and converted to Base64');
 
   // 3. Generate the QR code with proper options
+  console.log('Generating QR code...');
   QRCode.toCanvas(qrCanvas, base64Ciphertext, {
     errorCorrectionLevel: 'H',
-    margin: 1,
-    scale: 8,
-    width: 300
+    margin: 4,
+    scale: 4,
+    width: 400,
+    color: {
+      dark: '#000000',
+      light: '#ffffff'
+    }
   }, (error) => {
     if (error) {
-      console.error(error);
-      showError('error-message-encrypt', 'Error generating QR code.');
+      console.error('QR Generation Error:', error);
+      showError('error-message-encrypt', 'Error generating QR code: ' + error.message);
     } else {
-      console.log('QR code generated!');
+      console.log('QR code generated successfully!');
       qrCanvas.style.display = 'block';
     }
   });
@@ -136,29 +147,4 @@ decryptBtn.addEventListener('click', () => {
   reader.readAsDataURL(file);
 });
 
-      if (code) {
-        // 2. We get the Base64 data from the QR code
-        const base64Ciphertext = code.data;
-        
-        try {
-          // 3. IMPORTANT: Decode the Base64 back into binary ciphertext
-          const ciphertext = atob(base64Ciphertext);
 
-          // 4. Decrypt the ciphertext using the same Vernam function
-          const decryptedText = vernamCipher(ciphertext, key);
-          
-          resultText.value = decryptedText;
-        } catch (err) {
-          console.error(err);
-          showError('error-message-decrypt', 'Error: Invalid QR code data or wrong key.');
-        }
-
-      } else {
-        showError('error-message-decrypt', 'Error: Could not read a QR code from the image.');
-      }
-    };
-    img.src = e.target.result;
-  };
-
-  reader.readAsDataURL(file);
-});
